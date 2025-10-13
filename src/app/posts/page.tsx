@@ -78,26 +78,33 @@ export default function PostsPage() {
       ]);
       
       // Filtrar posts por categoria se uma categoria estiver selecionada
+      const allPosts = postsRes?.posts || [];
       const filteredPosts = selectedCategory 
-        ? postsRes.posts.filter(post => post.idCategoria === selectedCategory)
-        : postsRes.posts;
+        ? allPosts.filter(post => post.idCategoria === selectedCategory)
+        : allPosts;
       
       setPosts(filteredPosts);
-      setTotalPages(postsRes.pagination.totalPages);
-      setCategories(categoriesRes.categorias);
+      setTotalPages(postsRes?.pagination?.totalPages || 1);
+      setCategories(categoriesRes?.categorias || []);
       
       // Carregar usuários apenas se for admin
       if (isAdmin) {
         const usersRes = await usersAPI.getAll(1, 100);
-        setUsers(usersRes.usuarios);
+        setUsers(usersRes?.usuarios || []);
       } else {
         // Para usuários não-admin, usar apenas o usuário atual
         if (currentUser) {
           setUsers([currentUser]);
+        } else {
+          setUsers([]);
         }
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      setPosts([]);
+      setCategories([]);
+      setUsers([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

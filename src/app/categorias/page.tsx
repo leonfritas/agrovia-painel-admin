@@ -54,10 +54,12 @@ export default function CategoriasPage() {
     try {
       setLoading(true);
       const response = await categoriesAPI.getAll(currentPage, 10);
-      setCategories(response.categorias);
-      setTotalPages(response.pagination.totalPages);
+      setCategories(response?.categorias || []);
+      setTotalPages(response?.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Erro ao carregar categorias:', error);
+      setCategories([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

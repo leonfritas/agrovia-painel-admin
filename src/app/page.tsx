@@ -65,10 +65,10 @@ export default function DashboardPage() {
         ]);
 
         setStats({
-          totalUsers: usersRes.pagination.totalUsuarios,
-          totalCategories: categoriesRes.pagination.totalCategorias,
-          totalPosts: postsRes.pagination.totalPosts,
-          totalVideos: videosRes.pagination.totalVideos,
+          totalUsers: usersRes?.pagination?.totalUsuarios || 0,
+          totalCategories: categoriesRes?.pagination?.totalCategorias || 0,
+          totalPosts: postsRes?.pagination?.totalPosts || 0,
+          totalVideos: videosRes?.pagination?.totalVideos || 0,
         });
       } else {
         // Para usuários não-admin, não carregar estatísticas de usuários
@@ -80,9 +80,9 @@ export default function DashboardPage() {
 
         setStats({
           totalUsers: 0,
-          totalCategories: categoriesRes.pagination.totalCategorias,
-          totalPosts: postsRes.pagination.totalPosts,
-          totalVideos: videosRes.pagination.totalVideos,
+          totalCategories: categoriesRes?.pagination?.totalCategorias || 0,
+          totalPosts: postsRes?.pagination?.totalPosts || 0,
+          totalVideos: videosRes?.pagination?.totalVideos || 0,
         });
       }
     } catch (error) {

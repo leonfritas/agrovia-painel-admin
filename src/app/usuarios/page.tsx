@@ -50,17 +50,22 @@ export default function UsuariosPage() {
       if (isAdmin) {
         // Administradores podem ver todos os usuários
         const response = await usersAPI.getAll(currentPage, 10);
-        setUsers(response.usuarios);
-        setTotalPages(response.pagination.totalPages);
+        setUsers(response?.usuarios || []);
+        setTotalPages(response?.pagination?.totalPages || 1);
       } else {
         // Usuários comuns veem apenas a si mesmos
         if (currentUser) {
           setUsers([currentUser]);
           setTotalPages(1);
+        } else {
+          setUsers([]);
+          setTotalPages(1);
         }
       }
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
+      setUsers([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

@@ -71,22 +71,28 @@ export default function VideosPage() {
         categoriesAPI.getAll(1, 100),
       ]);
       
-      setVideos(videosRes.videos);
-      setTotalPages(videosRes.pagination.totalPages);
-      setCategories(categoriesRes.categorias);
+      setVideos(videosRes?.videos || []);
+      setTotalPages(videosRes?.pagination?.totalPages || 1);
+      setCategories(categoriesRes?.categorias || []);
       
       // Carregar usuários apenas se for admin
       if (isAdmin) {
         const usersRes = await usersAPI.getAll(1, 100);
-        setUsers(usersRes.usuarios);
+        setUsers(usersRes?.usuarios || []);
       } else {
         // Para usuários não-admin, usar apenas o usuário atual
         if (currentUser) {
           setUsers([currentUser]);
+        } else {
+          setUsers([]);
         }
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      setVideos([]);
+      setCategories([]);
+      setUsers([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

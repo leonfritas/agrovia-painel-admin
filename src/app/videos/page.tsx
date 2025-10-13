@@ -32,7 +32,7 @@ type VideoFormData = z.infer<typeof videoSchema>;
 
 export default function VideosPage() {
   const router = useRouter();
-  const { isAuthenticated, canManageContent, isAdmin, currentUser } = useAuth();
+  const { isAuthenticated, canManageContent, isAdmin, user: currentUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [videos, setVideos] = useState<Video[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

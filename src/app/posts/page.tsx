@@ -29,7 +29,7 @@ type PostFormData = z.infer<typeof postSchema>;
 
 export default function PostsPage() {
   const router = useRouter();
-  const { isAuthenticated, canManageContent, isAdmin, currentUser } = useAuth();
+  const { isAuthenticated, canManageContent, isAdmin, user: currentUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [posts, setPosts] = useState<Post[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

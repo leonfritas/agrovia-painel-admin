@@ -135,7 +135,7 @@ export default function ConfiguracoesPage() {
                     <div>
                       <dt className="text-sm font-medium text-gray-500">API Base URL</dt>
                       <dd className="mt-1 text-sm text-gray-900">
-                        {process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}
+                        {process.env.NEXT_PUBLIC_API_URL || 'https://5acfae47b7cd.ngrok-free.app/api'}
                       </dd>
                     </div>
                     <div>

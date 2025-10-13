@@ -34,7 +34,7 @@ npm install
 ```bash
 # Crie um arquivo .env.local (ou copie o .env.example)
 # Para desenvolvimento local:
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
 
 # Para usar a API via ngrok:
 NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api

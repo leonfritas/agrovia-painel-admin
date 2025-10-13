@@ -12,10 +12,10 @@ O ngrok é uma ferramenta que cria um túnel seguro da internet para o seu servi
 
 Primeiro, você precisa ter o ngrok rodando no servidor da API. Se você já tem a URL do ngrok, pule para o passo 2.
 
-Se ainda não tem, inicie o ngrok apontando para a porta da sua API (geralmente 3001):
+Se ainda não tem, inicie o ngrok apontando para a porta da sua API (geralmente 4000):
 
 ```bash
-ngrok http 3001
+ngrok http 4000
 ```
 
 Isso vai gerar uma URL parecida com:

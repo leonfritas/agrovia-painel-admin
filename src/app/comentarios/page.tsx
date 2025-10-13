@@ -12,7 +12,7 @@ import { formatDate, truncateText } from '@/lib/utils';
 import { CheckIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://5acfae47b7cd.ngrok-free.app/api';
 
 interface Comentario {
   idComentario: number;

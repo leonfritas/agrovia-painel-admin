@@ -22,10 +22,10 @@ const videoSchema = z.object({
   idCategoria: z.number().min(1, 'Categoria é obrigatória'),
   idUsuario: z.number().min(1, 'Usuário é obrigatório'),
   urlArquivo: z.string().optional(),
-  urlExterno: z.string().optional(),
-}).refine((data) => data.urlArquivo || data.urlExterno, {
-  message: 'Pelo menos uma URL (arquivo ou externa) deve ser fornecida',
-  path: ['urlArquivo'],
+  imagemThumb: z.string().optional(),
+  nomeAutor: z.string().optional(),
+  cargoAutor: z.string().optional(),
+  ordem: z.number().optional(),
 });
 
 type VideoFormData = z.infer<typeof videoSchema>;
@@ -42,6 +42,9 @@ export default function VideosPage() {
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const {
     register,
@@ -71,6 +74,7 @@ export default function VideosPage() {
         categoriesAPI.getAll(1, 100),
       ]);
       
+      
       setVideos(videosRes?.videos || []);
       setTotalPages(videosRes?.pagination?.totalPages || 1);
       setCategories(categoriesRes?.categorias || []);
@@ -98,21 +102,134 @@ export default function VideosPage() {
     }
   };
 
+  const uploadFile = async (file: File, type: 'video' | 'image'): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Erro ao fazer upload do arquivo');
+    }
+    
+    const result = await response.json();
+    
+    // Para vídeos, retornar o caminho correto
+    if (type === 'video') {
+      return `./public/videos/${result.fileName}`;
+    }
+    
+    return result.url;
+  };
+
   const onSubmit = async (data: VideoFormData) => {
     try {
+      setUploading(true);
+      
+      
       // Verificar se é uma das categorias especiais
       const selectedCategory = categories.find(cat => cat.idCategoria === data.idCategoria);
       const isSpecialCategory = selectedCategory?.nomeCategoria === 'Agrovia Inspira' || 
                                selectedCategory?.nomeCategoria === 'Agrovia Conversa';
       
+      // Fazer upload dos arquivos se houver
+      let videoUrl = data.urlArquivo;
+      let imageUrl = data.imagemThumb;
+      
+      if (videoFile) {
+        videoUrl = await uploadFile(videoFile, 'video');
+      }
+      
+      if (imageFile) {
+        imageUrl = await uploadFile(imageFile, 'image');
+      }
+      
+      // Validar se pelo menos o vídeo foi fornecido
+      if (!videoUrl && !videoFile) {
+        throw new Error('É necessário fazer upload de um vídeo');
+      }
+      
+      // Preparar dados para envio
+      const videoData = {
+        nomeVideo: data.nomeVideo,
+        descricao: data.descricao,
+        idUsuario: Number(data.idUsuario), // Garantir que seja number
+        idCategoria: Number(data.idCategoria), // Garantir que seja number
+        urlArquivo: videoUrl,
+        imagemThumb: imageUrl,
+        nomeAutor: data.nomeAutor,
+        cargoAutor: data.cargoAutor,
+        ordem: data.ordem || 0,
+        ativo: true,
+        dataUpload: new Date().toISOString(),
+      };
+      
+      // Log detalhado dos dados antes do envio
+      console.log('=== DADOS DO VÍDEO ANTES DO ENVIO ===');
+      console.log('nomeVideo:', videoData.nomeVideo, 'tipo:', typeof videoData.nomeVideo);
+      console.log('descricao:', videoData.descricao, 'tipo:', typeof videoData.descricao);
+      console.log('idUsuario:', videoData.idUsuario, 'tipo:', typeof videoData.idUsuario);
+      console.log('idCategoria:', videoData.idCategoria, 'tipo:', typeof videoData.idCategoria);
+      console.log('urlArquivo:', videoData.urlArquivo, 'tipo:', typeof videoData.urlArquivo);
+      console.log('imagemThumb:', videoData.imagemThumb, 'tipo:', typeof videoData.imagemThumb);
+      console.log('nomeAutor:', videoData.nomeAutor, 'tipo:', typeof videoData.nomeAutor);
+      console.log('cargoAutor:', videoData.cargoAutor, 'tipo:', typeof videoData.cargoAutor);
+      console.log('ordem:', videoData.ordem, 'tipo:', typeof videoData.ordem);
+      console.log('ativo:', videoData.ativo, 'tipo:', typeof videoData.ativo);
+      console.log('dataUpload:', videoData.dataUpload, 'tipo:', typeof videoData.dataUpload);
+      console.log('=====================================');
+      
+      
+      // Validar campos obrigatórios
+      if (!videoData.nomeVideo || !videoData.descricao || !videoData.idCategoria || !videoData.idUsuario) {
+        throw new Error('Campos obrigatórios não preenchidos');
+      }
+      
+      // Validar se o usuário existe na lista carregada
+      const userExists = users.find(u => u.idUsuario === videoData.idUsuario);
+      if (!userExists) {
+        console.error(`Usuário com ID ${videoData.idUsuario} não encontrado. Usuários disponíveis:`, users.map(u => u.idUsuario));
+        throw new Error(`Usuário com ID ${videoData.idUsuario} não encontrado. Recarregue a página.`);
+      }
+      
+      // Validar se a categoria existe na lista carregada
+      const categoryExists = categories.find(c => c.idCategoria === videoData.idCategoria);
+      if (!categoryExists) {
+        console.error(`Categoria com ID ${videoData.idCategoria} não encontrada. Categorias disponíveis:`, categories.map(c => c.idCategoria));
+        throw new Error(`Categoria com ID ${videoData.idCategoria} não encontrada. Recarregue a página.`);
+      }
+      
+      
+      // Verificar se os campos obrigatórios não estão vazios ou undefined
+      if (!videoData.nomeVideo || videoData.nomeVideo.trim() === '') {
+        throw new Error('Nome do vídeo não pode estar vazio');
+      }
+      if (!videoData.descricao || videoData.descricao.trim() === '') {
+        throw new Error('Descrição não pode estar vazia');
+      }
+      if (!videoData.idUsuario || videoData.idUsuario <= 0) {
+        throw new Error('ID do usuário inválido');
+      }
+      if (!videoData.idCategoria || videoData.idCategoria <= 0) {
+        throw new Error('ID da categoria inválido');
+      }
+      
+      
       if (editingVideo) {
-        await videosAPI.update(editingVideo.idVideo, data);
+        await videosAPI.update(editingVideo.idVideo, videoData);
       } else {
-        await videosAPI.create(data);
+        await videosAPI.create(videoData);
       }
       
       setIsModalOpen(false);
       setEditingVideo(null);
+      setVideoFile(null);
+      setImageFile(null);
       reset();
       loadData();
       
@@ -122,6 +239,10 @@ export default function VideosPage() {
       }
     } catch (error) {
       console.error('Erro ao salvar vídeo:', error);
+      console.error('Detalhes do erro:', error.response?.data);
+      alert('Erro ao salvar vídeo. Verifique se os arquivos são válidos.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -133,8 +254,13 @@ export default function VideosPage() {
       idCategoria: video.idCategoria,
       idUsuario: video.idUsuario,
       urlArquivo: video.urlArquivo || '',
-      urlExterno: video.urlExterno || '',
+      imagemThumb: video.imagemThumb || '',
+      nomeAutor: video.nomeAutor || '',
+      cargoAutor: video.cargoAutor || '',
+      ordem: video.ordem || 0,
     });
+    setVideoFile(null);
+    setImageFile(null);
     setIsModalOpen(true);
   };
 
@@ -151,13 +277,19 @@ export default function VideosPage() {
 
   const openCreateModal = () => {
     setEditingVideo(null);
-    reset();
+    // Usar o usuário atual ou o primeiro usuário disponível
+    const defaultUserId = currentUser?.idUsuario || (users.length > 0 ? users[0].idUsuario : 1);
+    reset({
+      idUsuario: defaultUserId,
+    });
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingVideo(null);
+    setVideoFile(null);
+    setImageFile(null);
     reset();
   };
 
@@ -243,7 +375,7 @@ export default function VideosPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              const url = video.urlArquivo || video.urlExterno;
+                              const url = video.urlArquivo;
                               if (url) window.open(url, '_blank');
                             }}
                             title="Reproduzir vídeo"
@@ -392,32 +524,92 @@ export default function VideosPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Upload de Vídeo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Arquivo de Vídeo (MP4)
+            </label>
+            <div className="flex items-center space-x-4">
+              <input
+                type="file"
+                accept="video/mp4"
+                onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {videoFile && (
+                <span className="text-sm text-green-600">
+                  ✓ {videoFile.name}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Ou use URL do arquivo abaixo
+            </p>
+          </div>
+
+          {/* Upload de Imagem */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Imagem de Capa (JPG/PNG)
+            </label>
+            <div className="flex items-center space-x-4">
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              />
+              {imageFile && (
+                <span className="text-sm text-green-600">
+                  ✓ {imageFile.name}
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Imagem que será exibida como capa do vídeo
+            </p>
+          </div>
+
+          {/* URL do arquivo (preenchida automaticamente) */}
+          <div>
             <Input
-              label="URL do Arquivo (opcional)"
+              label="URL do Arquivo (preenchida automaticamente)"
               {...register('urlArquivo')}
               error={errors.urlArquivo?.message}
-              placeholder="https://exemplo.com/video.mp4"
+              placeholder="Será preenchida automaticamente ao fazer upload"
+              readOnly
+              className="bg-gray-50"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              A URL será preenchida automaticamente quando você fizer upload do vídeo
+            </p>
+          </div>
+
+          {/* Campos adicionais */}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Nome do Autor"
+              {...register('nomeAutor')}
+              placeholder="Nome do autor do vídeo"
             />
 
             <Input
-              label="URL Externa (opcional)"
-              {...register('urlExterno')}
-              error={errors.urlExterno?.message}
-              placeholder="https://youtube.com/watch?v=..."
+              label="Cargo do Autor"
+              {...register('cargoAutor')}
+              placeholder="Ex: Engenheiro, Produtor, etc."
             />
           </div>
 
           <div className="text-sm text-gray-500">
-            <p>Nota: Pelo menos uma URL (arquivo ou externa) deve ser fornecida.</p>
+            <p>Nota: Pelo menos uma URL (arquivo ou externa) deve ser fornecida, ou faça upload de um arquivo de vídeo.</p>
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button type="button" variant="secondary" onClick={closeModal}>
+            <Button type="button" variant="secondary" onClick={closeModal} disabled={uploading}>
               Cancelar
             </Button>
-            <Button type="submit">
-              {editingVideo ? 'Atualizar' : 'Criar'}
+            <Button type="submit" disabled={uploading}>
+              {uploading ? 'Salvando...' : (editingVideo ? 'Atualizar' : 'Criar')}
             </Button>
           </div>
         </form>

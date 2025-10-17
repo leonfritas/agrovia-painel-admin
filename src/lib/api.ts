@@ -11,6 +11,7 @@ const api = axios.create({
   },
 });
 
+
 // Interceptor para adicionar token de autenticação
 api.interceptors.request.use(
   (config) => {
@@ -76,6 +77,11 @@ export interface Video {
   idUsuario: number;
   dataUpload: string;
   idCategoria: number;
+  imagemThumb?: string;
+  nomeAutor?: string;
+  cargoAutor?: string;
+  ordem?: number;
+  ativo?: boolean;
   categoria?: Category;
   usuario?: User;
 }
@@ -176,46 +182,8 @@ export const categoriesAPI = {
   },
 
   delete: async (id: number): Promise<{ message: string }> => {
-    try {
-      console.log('API: Tentando excluir categoria ID:', id);
-      
-      // Primeiro, verificar se a categoria está sendo usada em posts ou vídeos
-      try {
-        const [postsRes, videosRes] = await Promise.all([
-          api.get(`/posts?categoria=${id}&limit=1`).catch(() => ({ data: { posts: [] } })),
-          api.get(`/videos?categoria=${id}&limit=1`).catch(() => ({ data: { videos: [] } }))
-        ]);
-        
-        const postsUsingCategory = postsRes.data?.posts || [];
-        const videosUsingCategory = videosRes.data?.videos || [];
-        
-        if (postsUsingCategory.length > 0) {
-          throw new Error('Esta categoria está sendo usada em posts e não pode ser excluída.');
-        }
-        
-        if (videosUsingCategory.length > 0) {
-          throw new Error('Esta categoria está sendo usada em vídeos e não pode ser excluída.');
-        }
-      } catch (checkError: any) {
-        if (checkError.message.includes('sendo usada')) {
-          throw checkError;
-        }
-        // Se não for erro de uso, continuar com a exclusão
-      }
-      
-      const response = await api.delete(`/categorias/${id}`);
-      console.log('API: Resposta da exclusão:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('API: Erro ao excluir categoria:', {
-        id,
-        status: error?.response?.status,
-        statusText: error?.response?.statusText,
-        data: error?.response?.data,
-        message: error?.message
-      });
-      throw error;
-    }
+    const response = await api.delete(`/categorias/${id}`);
+    return response.data;
   },
 };
 
@@ -274,16 +242,27 @@ export const videosAPI = {
   },
 
   create: async (data: Partial<Video>): Promise<{ message: string; video: Video }> => {
+    console.log('Enviando dados para backend /videos:', data);
+    console.log('Headers da requisição:', {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+      'Authorization': `Bearer ${localStorage.getItem('admin_token')?.substring(0, 50)}...`
+    });
+    
     const response = await api.post('/videos', data);
     return response.data;
   },
 
   update: async (id: number, data: Partial<Video>): Promise<{ message: string; video: Video }> => {
+    console.log('Atualizando vídeo no backend:', id, data);
+    
     const response = await api.put(`/videos/${id}`, data);
     return response.data;
   },
 
   delete: async (id: number): Promise<{ message: string }> => {
+    console.log('Excluindo vídeo no backend:', id);
+    
     const response = await api.delete(`/videos/${id}`);
     return response.data;
   },

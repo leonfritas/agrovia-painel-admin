@@ -1,0 +1,19 @@
+[
+  {
+    "idVideo": 1,
+    "nomeVideo": "teste nome",
+    "descricao": "teste descrição",
+    "idUsuario": 4,
+    "idCategoria": 1004,
+    "urlArquivo": "./public/videos/conduta 092.mp4",
+    "urlExterno": null,
+    "imagemThumb": "/public/images/image_1760667440069.png",
+    "nomeAutor": "nome autor teste",
+    "cargoAutor": "cargo autor teste",
+    "ordem": 0,
+    "ativo": true,
+    "dataUpload": "2025-10-17T02:17:20.085Z",
+    "dataCriacao": "2025-10-17T02:17:20.453Z",
+    "dataAtualizacao": "2025-10-17T02:17:20.453Z"
+  }
+]

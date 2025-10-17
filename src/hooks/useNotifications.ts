@@ -50,62 +50,23 @@ export function useNotifications() {
     try {
       setLoading(true);
       
-      // Carregar comentários pendentes
+      // Carregar apenas comentários pendentes
       const commentsRes = await commentsAPI.getPending();
       const pendingComments = commentsRes?.comentarios || [];
       
-      // Criar notificações para comentários pendentes
-      const commentNotifications: Notification[] = pendingComments.map((comment, index) => ({
+      // Criar notificações apenas para comentários pendentes
+      const commentNotifications: Notification[] = pendingComments.map((comment) => ({
         id: `comment-${comment.idComentario}`,
         type: 'comment' as const,
-        title: 'Novo comentário para aprovação',
-        message: `"${comment.textoComentario.substring(0, 50)}..." por ${comment.nomeAutor}`,
+        title: 'Comentário pendente de aprovação',
+        message: `"${comment.textoComentario.substring(0, 50)}${comment.textoComentario.length > 50 ? '...' : ''}" por ${comment.nomeAutor}`,
         timestamp: new Date(comment.dataComentario),
         read: false,
         actionUrl: '/comentarios',
       }));
 
-      // Carregar estatísticas para criar notificações de atividade recente
-      const [usersRes, categoriesRes, postsRes, videosRes] = await Promise.all([
-        usersAPI.getAll(1, 1).catch(() => ({ pagination: { totalUsuarios: 0 } })),
-        categoriesAPI.getAll(1, 1).catch(() => ({ pagination: { totalCategorias: 0 } })),
-        postsAPI.getAll(1, 1).catch(() => ({ pagination: { totalPosts: 0 } })),
-        videosAPI.getAll(1, 1).catch(() => ({ pagination: { totalVideos: 0 } })),
-      ]);
-
-      // Criar notificações de atividade (simuladas para demonstração)
-      const activityNotifications: Notification[] = [
-        {
-          id: 'activity-users',
-          type: 'user',
-          title: 'Usuários cadastrados',
-          message: `${usersRes?.pagination?.totalUsuarios || 0} usuários no sistema`,
-          timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 min atrás
-          read: false,
-          actionUrl: '/usuarios',
-        },
-        {
-          id: 'activity-posts',
-          type: 'post',
-          title: 'Posts publicados',
-          message: `${postsRes?.pagination?.totalPosts || 0} posts no sistema`,
-          timestamp: new Date(Date.now() - 1000 * 60 * 60), // 1 hora atrás
-          read: false,
-          actionUrl: '/posts',
-        },
-        {
-          id: 'activity-videos',
-          type: 'video',
-          title: 'Vídeos adicionados',
-          message: `${videosRes?.pagination?.totalVideos || 0} vídeos no sistema`,
-          timestamp: new Date(Date.now() - 1000 * 60 * 90), // 1.5 horas atrás
-          read: false,
-          actionUrl: '/videos',
-        },
-      ];
-
-      // Combinar todas as notificações e ordenar por timestamp
-      const allNotifications = [...commentNotifications, ...activityNotifications]
+      // Ordenar por timestamp (mais recentes primeiro)
+      const allNotifications = commentNotifications
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
       setNotifications(allNotifications);
@@ -113,6 +74,9 @@ export function useNotifications() {
       
     } catch (error) {
       console.error('Erro ao carregar notificações:', error);
+      // Em caso de erro, limpar notificações
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -137,3 +101,4 @@ export function useNotifications() {
     loadNotifications,
   };
 }
+

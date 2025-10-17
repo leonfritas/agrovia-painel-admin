@@ -176,8 +176,46 @@ export const categoriesAPI = {
   },
 
   delete: async (id: number): Promise<{ message: string }> => {
-    const response = await api.delete(`/categorias/${id}`);
-    return response.data;
+    try {
+      console.log('API: Tentando excluir categoria ID:', id);
+      
+      // Primeiro, verificar se a categoria está sendo usada em posts ou vídeos
+      try {
+        const [postsRes, videosRes] = await Promise.all([
+          api.get(`/posts?categoria=${id}&limit=1`).catch(() => ({ data: { posts: [] } })),
+          api.get(`/videos?categoria=${id}&limit=1`).catch(() => ({ data: { videos: [] } }))
+        ]);
+        
+        const postsUsingCategory = postsRes.data?.posts || [];
+        const videosUsingCategory = videosRes.data?.videos || [];
+        
+        if (postsUsingCategory.length > 0) {
+          throw new Error('Esta categoria está sendo usada em posts e não pode ser excluída.');
+        }
+        
+        if (videosUsingCategory.length > 0) {
+          throw new Error('Esta categoria está sendo usada em vídeos e não pode ser excluída.');
+        }
+      } catch (checkError: any) {
+        if (checkError.message.includes('sendo usada')) {
+          throw checkError;
+        }
+        // Se não for erro de uso, continuar com a exclusão
+      }
+      
+      const response = await api.delete(`/categorias/${id}`);
+      console.log('API: Resposta da exclusão:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('API: Erro ao excluir categoria:', {
+        id,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: error?.message
+      });
+      throw error;
+    }
   },
 };
 

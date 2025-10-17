@@ -91,13 +91,48 @@ export default function CategoriasPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (confirm('Tem certeza que deseja excluir esta categoria?')) {
-      try {
-        await categoriesAPI.delete(id);
-        loadCategories();
-      } catch (error) {
-        console.error('Erro ao excluir categoria:', error);
+    if (!confirm('Tem certeza que deseja excluir esta categoria?')) return;
+    
+    try {
+      console.log('Tentando excluir categoria ID:', id);
+      await categoriesAPI.delete(id);
+      console.log('Categoria excluída com sucesso');
+      loadCategories();
+      alert('Categoria excluída com sucesso!');
+    } catch (error: any) {
+      console.error('Erro detalhado ao excluir categoria:', {
+        id,
+        error,
+        status: error?.response?.status,
+        statusText: error?.response?.statusText,
+        data: error?.response?.data,
+        message: error?.message
+      });
+      
+      // Tratamento de erro mais específico baseado no status
+      let errorMessage = 'Erro desconhecido ao excluir categoria';
+      
+      if (error?.message?.includes('sendo usada')) {
+        errorMessage = error.message;
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'Erro interno do servidor. Verifique se a categoria não está sendo usada em posts ou vídeos.';
+      } else if (error?.response?.status === 404) {
+        errorMessage = 'Categoria não encontrada.';
+      } else if (error?.response?.status === 403) {
+        errorMessage = 'Você não tem permissão para excluir esta categoria.';
+      } else if (error?.response?.status === 400) {
+        errorMessage = 'Dados inválidos para exclusão.';
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
       }
+      
+      // Mostrar erro mais detalhado para debug
+      const debugInfo = error?.response?.status ? 
+        ` (Status: ${error.response.status})` : '';
+      
+      alert(`Erro: ${errorMessage}${debugInfo}`);
     }
   };
 

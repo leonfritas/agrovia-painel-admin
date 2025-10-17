@@ -100,6 +100,11 @@ export default function VideosPage() {
 
   const onSubmit = async (data: VideoFormData) => {
     try {
+      // Verificar se é uma das categorias especiais
+      const selectedCategory = categories.find(cat => cat.idCategoria === data.idCategoria);
+      const isSpecialCategory = selectedCategory?.nomeCategoria === 'Agrovia Inspira' || 
+                               selectedCategory?.nomeCategoria === 'Agrovia Conversa';
+      
       if (editingVideo) {
         await videosAPI.update(editingVideo.idVideo, data);
       } else {
@@ -110,6 +115,11 @@ export default function VideosPage() {
       setEditingVideo(null);
       reset();
       loadData();
+      
+      // Mostrar mensagem especial para categorias de vídeo
+      if (isSpecialCategory) {
+        alert(`Vídeo salvo com sucesso! Ele será exibido automaticamente no carrossel da seção "${selectedCategory?.nomeCategoria}" no site.`);
+      }
     } catch (error) {
       console.error('Erro ao salvar vídeo:', error);
     }
@@ -306,6 +316,13 @@ export default function VideosPage() {
         title={editingVideo ? 'Editar Vídeo' : 'Novo Vídeo'}
         size="lg"
       >
+        {/* Nota sobre categorias especiais */}
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-700">
+            <strong>📹 Categorias especiais:</strong> Vídeos salvos nas categorias "Agrovia Inspira" e "Agrovia Conversa" 
+            são automaticamente exibidos no carrossel do site web.
+          </p>
+        </div>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
             label="Nome do Vídeo"
@@ -339,11 +356,15 @@ export default function VideosPage() {
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white text-gray-900"
               >
                 <option value="">Selecione uma categoria</option>
-                {categories.map((category) => (
-                  <option key={category.idCategoria} value={category.idCategoria}>
-                    {category.nomeCategoria}
-                  </option>
-                ))}
+                {categories.map((category) => {
+                  const isSpecial = category.nomeCategoria === 'Agrovia Inspira' || 
+                                  category.nomeCategoria === 'Agrovia Conversa';
+                  return (
+                    <option key={category.idCategoria} value={category.idCategoria}>
+                      {category.nomeCategoria} {isSpecial ? '📹' : ''}
+                    </option>
+                  );
+                })}
               </select>
               {errors.idCategoria && (
                 <p className="text-sm text-red-600 mt-1">{errors.idCategoria.message}</p>

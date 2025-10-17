@@ -82,11 +82,11 @@ export function NotificationsModal({
         <div className="flex items-center justify-between pb-4 border-b border-gray-200">
           <div className="flex items-center space-x-2">
             <span className="text-sm font-medium text-gray-700">
-              {notifications.length} notificações
+              {notifications.length} comentários pendentes
             </span>
             {unreadCount > 0 && (
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                {unreadCount} não lidas
+                {unreadCount} não lidos
               </span>
             )}
           </div>
@@ -108,8 +108,9 @@ export function NotificationsModal({
         <div className="max-h-96 overflow-y-auto space-y-3">
           {notifications.length === 0 ? (
             <div className="text-center py-8">
-              <ClockIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Nenhuma notificação</p>
+              <ChatBubbleLeftIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Nenhum comentário pendente</p>
+              <p className="text-gray-400 text-sm mt-1">Todos os comentários foram moderados</p>
             </div>
           ) : (
             notifications.map((notification) => (
@@ -155,7 +156,7 @@ export function NotificationsModal({
           )}
         </div>
 
-        {/* Footer com link para ver todas */}
+        {/* Footer com link para ver todos os comentários */}
         {notifications.length > 0 && (
           <div className="pt-4 border-t border-gray-200">
             <Button
@@ -167,7 +168,7 @@ export function NotificationsModal({
               }}
               className="w-full text-blue-600 hover:text-blue-700"
             >
-              Ver todas as atividades
+              Ver todos os comentários pendentes
             </Button>
           </div>
         )}
@@ -175,3 +176,4 @@ export function NotificationsModal({
     </Modal>
   );
 }
+

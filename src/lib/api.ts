@@ -251,4 +251,40 @@ export const videosAPI = {
   },
 };
 
+// Tipos para comentários
+export interface Comentario {
+  idComentario: number;
+  idPost: number;
+  nomeAutor: string;
+  textoComentario: string;
+  dataComentario: string;
+  aprovado: boolean;
+  moderado: boolean;
+  motivoRejeicao?: string;
+  nomePost?: string;
+}
+
+// API de comentários
+export const commentsAPI = {
+  getPending: async (): Promise<{ comentarios: Comentario[] }> => {
+    const response = await api.get('/comentarios/pending');
+    return response.data;
+  },
+
+  approve: async (id: number): Promise<{ message: string }> => {
+    const response = await api.put(`/comentarios/${id}/approve`);
+    return response.data;
+  },
+
+  reject: async (id: number, motivo: string): Promise<{ message: string }> => {
+    const response = await api.put(`/comentarios/${id}/reject`, { motivo });
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/comentarios/${id}`);
+    return response.data;
+  },
+};
+
 export default api;

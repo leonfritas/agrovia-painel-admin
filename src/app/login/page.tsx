@@ -81,13 +81,14 @@ export default function LoginPage() {
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-4">
+          <div className="space-y-4 ">
             <Input
               label="Nome de Usuário"
               {...register('nomeUsuario')}
               error={errors.nomeUsuario?.message}
               placeholder="Digite seu nome de usuário"
               autoComplete="username"
+              className='h-9 outline-none pl-2'
             />
 
             <Input
@@ -97,6 +98,7 @@ export default function LoginPage() {
               error={errors.senhaUsuario?.message}
               placeholder="Digite sua senha"
               autoComplete="current-password"
+              className='h-9 outline-none pl-2'
             />
           </div>
 
@@ -117,14 +119,14 @@ export default function LoginPage() {
             </Button>
           </div>
 
-          <div className="text-center">
+          {/* <div className="text-center">
             <p className="text-sm text-gray-600">
               Credenciais de teste:
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Usuário: admin | Senha: 01042018
             </p>
-          </div>
+          </div> */}
         </form>
       </div>
     </div>

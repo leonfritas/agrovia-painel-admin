@@ -10,21 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Modal } from '@/components/ui/Modal';
 import { formatDate, truncateText } from '@/lib/utils';
 import { CheckIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
-import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://5acfae47b7cd.ngrok-free.app/api';
-
-interface Comentario {
-  idComentario: number;
-  idPost: number;
-  nomeAutor: string;
-  textoComentario: string;
-  dataComentario: string;
-  aprovado: boolean;
-  moderado: boolean;
-  motivoRejeicao?: string;
-  nomePost?: string;
-}
+import { commentsAPI, Comentario } from '@/lib/api';
 
 export default function ComentariosPage() {
   const router = useRouter();
@@ -48,15 +34,8 @@ export default function ComentariosPage() {
   const loadComentarios = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('admin_token');
-      
-      const response = await axios.get(`${API_BASE_URL}/comentarios/pending`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      setComentarios(response.data.comentarios);
+      const response = await commentsAPI.getPending();
+      setComentarios(response?.comentarios || []);
     } catch (error) {
       console.error('Erro ao carregar comentários:', error);
     } finally {
@@ -68,18 +47,7 @@ export default function ComentariosPage() {
     if (!confirm('Tem certeza que deseja aprovar este comentário?')) return;
 
     try {
-      const token = localStorage.getItem('admin_token');
-      
-      await axios.put(
-        `${API_BASE_URL}/comentarios/${id}/approve`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
+      await commentsAPI.approve(id);
       loadComentarios();
     } catch (error) {
       console.error('Erro ao aprovar comentário:', error);
@@ -101,17 +69,7 @@ export default function ComentariosPage() {
     }
 
     try {
-      const token = localStorage.getItem('admin_token');
-      
-      await axios.put(
-        `${API_BASE_URL}/comentarios/${selectedComentario.idComentario}/reject`,
-        { motivo: motivoRejeicao },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      await commentsAPI.reject(selectedComentario.idComentario, motivoRejeicao);
       
       setIsModalOpen(false);
       setSelectedComentario(null);
@@ -127,14 +85,7 @@ export default function ComentariosPage() {
     if (!confirm('Tem certeza que deseja excluir este comentário permanentemente?')) return;
 
     try {
-      const token = localStorage.getItem('admin_token');
-      
-      await axios.delete(`${API_BASE_URL}/comentarios/${id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
+      await commentsAPI.delete(id);
       loadComentarios();
     } catch (error) {
       console.error('Erro ao deletar comentário:', error);

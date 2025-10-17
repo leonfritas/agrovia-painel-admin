@@ -72,7 +72,7 @@ export default function ConfiguracoesPage() {
                   
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-gray-700 outline-none">
                         Nome de Usuário
                       </label>
                       <div className="mt-1 flex rounded-md shadow-sm">

@@ -2,6 +2,8 @@
 
 Painel administrativo para gerenciar o sistema Agrovia, desenvolvido com Next.js 14, TypeScript e Tailwind CSS.
 
+![Image](https://github.com/user-attachments/assets/d939c51a-8381-4c7c-bad3-4008b212e59f)
+
 ## 🚀 Funcionalidades
 
 - **Dashboard**: Visão geral com estatísticas do sistema

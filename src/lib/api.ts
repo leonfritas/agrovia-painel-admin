@@ -1,10 +1,6 @@
 import axios from 'axios';
 
-<<<<<<< HEAD
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-=======
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://93c44447ef94.ngrok-free.app/api';
->>>>>>> 9d7007c16fa98e9e4f1853131cb5770a43a73879
 
 // Configurar axios com interceptors
 const api = axios.create({

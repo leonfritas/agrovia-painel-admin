@@ -2,6 +2,8 @@
 
 Painel administrativo para gerenciar o sistema Agrovia, desenvolvido com Next.js 14, TypeScript e Tailwind CSS.
 
+![Image](https://github.com/user-attachments/assets/d939c51a-8381-4c7c-bad3-4008b212e59f)
+
 ## 🚀 Funcionalidades
 
 - **Dashboard**: Visão geral com estatísticas do sistema
@@ -23,6 +25,7 @@ Painel administrativo para gerenciar o sistema Agrovia, desenvolvido com Next.js
 - **Zod** - Validação de schemas
 - **Axios** - Cliente HTTP
 
+<<<<<<< HEAD
 ## 📦 Instalação
 
 1. Instale as dependências:
@@ -59,6 +62,8 @@ O painel requer autenticação de administrador. Use as credenciais:
 - **Usuário**: admin
 - **Senha**: 01042018
 
+=======
+>>>>>>> dfb427331f3aa386629099aa3fb1fc94fc8ad1f1
 ## 📱 Responsividade
 
 O painel é totalmente responsivo e funciona em:
@@ -118,21 +123,3 @@ O painel consome a API REST (configurável via `.env.local`) com os seguintes en
 - `PUT /videos/:id` - Atualizar vídeo
 - `DELETE /videos/:id` - Excluir vídeo
 
-## 🚀 Deploy
-
-Para fazer deploy em produção:
-
-1. Configure as variáveis de ambiente
-2. Execute o build:
-```bash
-npm run build
-```
-
-3. Inicie o servidor de produção:
-```bash
-npm start
-```
-
-## 📄 Licença
-
-Este projeto é parte do sistema Agrovia e está sob licença proprietária.

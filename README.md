@@ -23,42 +23,6 @@ Painel administrativo para gerenciar o sistema Agrovia, desenvolvido com Next.js
 - **Zod** - Validação de schemas
 - **Axios** - Cliente HTTP
 
-## 📦 Instalação
-
-1. Instale as dependências:
-```bash
-npm install
-```
-
-2. Configure as variáveis de ambiente:
-```bash
-# Crie um arquivo .env.local (ou copie o .env.example)
-# Para desenvolvimento local:
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
-
-# Para usar a API via ngrok:
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
-```
-
-**Importante**: Substitua `sua-url-do-ngrok` pela URL real fornecida pelo ngrok. Exemplo:
-```bash
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
-```
-
-3. Execute o servidor de desenvolvimento:
-```bash
-npm run dev
-```
-
-4. Acesse [http://localhost:3000](http://localhost:3000)
-
-## 🔐 Autenticação
-
-O painel requer autenticação de administrador. Use as credenciais:
-
-- **Usuário**: admin
-- **Senha**: 01042018
-
 ## 📱 Responsividade
 
 O painel é totalmente responsivo e funciona em:
@@ -117,21 +81,6 @@ O painel consome a API REST (configurável via `.env.local`) com os seguintes en
 - `POST /videos` - Criar vídeo
 - `PUT /videos/:id` - Atualizar vídeo
 - `DELETE /videos/:id` - Excluir vídeo
-
-## 🚀 Deploy
-
-Para fazer deploy em produção:
-
-1. Configure as variáveis de ambiente
-2. Execute o build:
-```bash
-npm run build
-```
-
-3. Inicie o servidor de produção:
-```bash
-npm start
-```
 
 ## 📄 Licença
 

@@ -20,7 +20,7 @@ ngrok http 4000
 
 Isso vai gerar uma URL parecida com:
 ```
-https://5acfae47b7cd.ngrok-free.app
+https://93c44447ef94.ngrok-free.app
 ```
 
 ### 2. Configurar a Variável de Ambiente

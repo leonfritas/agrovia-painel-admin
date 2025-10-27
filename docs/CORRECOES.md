@@ -126,7 +126,7 @@ const { isAuthenticated, canManageContent, isAdmin, user: currentUser } = useAut
 
 ## Notas Importantes
 
-- A API deve estar rodando e acessível via ngrok: `https://5acfae47b7cd.ngrok-free.app/api`
+- A API deve estar rodando e acessível via ngrok: `https://93c44447ef94.ngrok-free.app/api`
 - Se a API estiver offline ou retornar erros, o painel exibirá arrays vazios e valores padrão
 - Verifique o console do navegador (F12) para mensagens de erro detalhadas
 

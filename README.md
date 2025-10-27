@@ -34,15 +34,15 @@ npm install
 ```bash
 # Crie um arquivo .env.local (ou copie o .env.example)
 # Para desenvolvimento local:
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
+NEXT_PUBLIC_API_URL=https://93c44447ef94.ngrok-free.app/api
 
 # Para usar a API via ngrok:
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
+NEXT_PUBLIC_API_URL=https://93c44447ef94.ngrok-free.app/api
 ```
 
 **Importante**: Substitua `sua-url-do-ngrok` pela URL real fornecida pelo ngrok. Exemplo:
 ```bash
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
+NEXT_PUBLIC_API_URL=https://93c44447ef94.ngrok-free.app/api
 ```
 
 3. Execute o servidor de desenvolvimento:

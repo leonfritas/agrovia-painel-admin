@@ -11,11 +11,11 @@ Quando o ngrok retorna uma página HTML de aviso ao invés de dados JSON, o axio
 ### Evidência do Problema:
 ```bash
 # Teste sem header ngrok
-curl https://5acfae47b7cd.ngrok-free.app/api/categorias
+curl https://93c44447ef94.ngrok-free.app/api/categorias
 # Retorna: <!DOCTYPE html> (página de aviso do ngrok)
 
 # Teste com header correto  
-curl -H "ngrok-skip-browser-warning: true" https://5acfae47b7cd.ngrok-free.app/api/categorias
+curl -H "ngrok-skip-browser-warning: true" https://93c44447ef94.ngrok-free.app/api/categorias
 # Retorna: {"error":"Token não fornecido"} (resposta JSON válida)
 ```
 
@@ -113,7 +113,7 @@ setStats({
 
 ### .env.local
 ```bash
-NEXT_PUBLIC_API_URL=https://5acfae47b7cd.ngrok-free.app/api
+NEXT_PUBLIC_API_URL=https://93c44447ef94.ngrok-free.app/api
 ```
 
 ### Headers HTTP

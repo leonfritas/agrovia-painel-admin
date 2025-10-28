@@ -237,7 +237,7 @@ export default function VideosPage() {
       if (isSpecialCategory) {
         alert(`Vídeo salvo com sucesso! Ele será exibido automaticamente no carrossel da seção "${selectedCategory?.nomeCategoria}" no site.`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao salvar vídeo:', error);
       console.error('Detalhes do erro:', error.response?.data);
       alert('Erro ao salvar vídeo. Verifique se os arquivos são válidos.');

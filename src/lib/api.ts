@@ -63,6 +63,8 @@ export interface Post {
   imagemPost?: string;
   imagemDestaque?: string;
   imagemConteudo?: string;
+  imagemFooter?: string;
+  conteudoFooter?: string;  
   linkExterno?: string;
   categoria?: Category;
   usuario?: User;

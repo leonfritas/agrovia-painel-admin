@@ -23,6 +23,7 @@ const postSchema = z.object({
   idCategoria: z.number().min(1, 'Categoria é obrigatória'),
   idUsuario: z.number().min(1, 'Usuário é obrigatório'),
   linkExterno: z.string().optional(),
+  conteudoFooter: z.string().optional(),
 });
 
 type PostFormData = z.infer<typeof postSchema>;
@@ -43,10 +44,12 @@ export default function PostsPage() {
   const [imageFiles, setImageFiles] = useState<{
     imagemDestaque?: File;
     imagemConteudo?: File;
+    imagemFooter?: File;
   }>({});
   const [imagePreviews, setImagePreviews] = useState<{
     imagemDestaque?: string;
     imagemConteudo?: string;
+    imagemFooter?: File;
   }>({});
 
   const {
@@ -110,7 +113,7 @@ export default function PostsPage() {
     }
   };
 
-  const handleImageChange = (field: 'imagemDestaque' | 'imagemConteudo', file: File | null) => {
+  const handleImageChange = (field: 'imagemDestaque' | 'imagemConteudo' | 'imagemFooter', file: File | null) => {
     if (file) {
       setImageFiles(prev => ({ ...prev, [field]: file }));
       
@@ -136,8 +139,8 @@ export default function PostsPage() {
 
   const onSubmit = async (data: PostFormData) => {
     try {
-      console.log('📝 Dados do formulário:', data);
-      console.log('🖼️ Arquivos de imagem:', imageFiles);
+      console.log('Dados do formulário:', data);
+      console.log('Arquivos de imagem:', imageFiles);
       
       // Criar FormData para enviar com imagens
       const formData = new FormData();
@@ -147,15 +150,20 @@ export default function PostsPage() {
       formData.append('idCategoria', data.idCategoria.toString());
       formData.append('idUsuario', data.idUsuario.toString());
       if (data.linkExterno) formData.append('linkExterno', data.linkExterno);
+      if (data.conteudoFooter) formData.append('conteudoFooter', data.conteudoFooter);
       
       // Adicionar imagens se foram selecionadas
       if (imageFiles.imagemDestaque) {
         formData.append('imagemDestaque', imageFiles.imagemDestaque);
-        console.log('✅ Imagem de destaque adicionada');
+        console.log('Imagem de destaque adicionada');
       }
       if (imageFiles.imagemConteudo) {
         formData.append('imagemConteudo', imageFiles.imagemConteudo);
-        console.log('✅ Imagem de conteúdo adicionada');
+        console.log('Imagem de conteúdo adicionada');
+      }
+      if (imageFiles.imagemFooter) {
+        formData.append('imagemFooter', imageFiles.imagemFooter);
+        console.log('Imagem de footer adicionada');
       }
 
       console.log('📤 Enviando para API...');
@@ -176,7 +184,7 @@ export default function PostsPage() {
       reset();
       loadData();
     } catch (error: any) {
-      console.error('❌ Erro ao salvar post:', error);
+      console.error('Erro ao salvar post:', error);
       console.error('Detalhes do erro:', error.response?.data || error.message);
       alert(`Erro ao salvar post: ${error.response?.data?.message || error.message || 'Erro desconhecido'}`);
     }
@@ -191,6 +199,7 @@ export default function PostsPage() {
       idCategoria: post.idCategoria,
       idUsuario: post.idUsuario,
       linkExterno: post.linkExterno,
+      conteudoFooter: post.conteudoFooter,
     });
     
     // Limpar imagens selecionadas
@@ -427,6 +436,17 @@ export default function PostsPage() {
               placeholder="Digite o conteúdo completo do post (opcional)"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Conteúdo Adicional
+            </label>
+            <textarea
+              {...register('conteudoFooter')}
+              rows={8}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white text-gray-900 placeholder-gray-500 px-3 py-2 border"
+              placeholder="Digite o conteúdo adicional do post (opcional)"
+            />
+          </div>          
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -512,6 +532,24 @@ export default function PostsPage() {
               {imagePreviews.imagemConteudo && (
                 <div className="mt-2">
                   <img src={imagePreviews.imagemConteudo} alt="Preview" className="h-32 w-auto rounded-lg border" />
+                </div>
+              )}
+            </div>
+
+            {/* Imagem do Final */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Imagem do Final (fim do artigo)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange('imagemFooter', e.target.files?.[0] || null)}
+                className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none px-3 py-2"
+              />
+              {imagePreviews.imagemFooter && (
+                <div className="mt-2">
+                  <img src={imagePreviews.imagemFooter} alt="Preview" className="h-32 w-auto rounded-lg border" />
                 </div>
               )}
             </div>

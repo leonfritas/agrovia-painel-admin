@@ -105,7 +105,12 @@ export default function UsuariosPage() {
           alert('A senha deve ter pelo menos 6 caracteres.');
           return;
         }
-        await usersAPI.create(data);
+        // Garantir que senhaUsuario seja string (não undefined)
+        await usersAPI.create({
+          nomeUsuario: data.nomeUsuario,
+          senhaUsuario: data.senhaUsuario,
+          ativoAdm: data.ativoAdm,
+        });
       }
       
       setIsModalOpen(false);

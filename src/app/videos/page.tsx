@@ -20,7 +20,6 @@ const videoSchema = z.object({
   nomeVideo: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
   descricao: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   idCategoria: z.number().min(1, 'Categoria é obrigatória'),
-  idUsuario: z.number().min(1, 'Usuário é obrigatório'),
   urlArquivo: z.string().optional(),
   imagemThumb: z.string().optional(),
   nomeAutor: z.string().optional(),
@@ -45,6 +44,15 @@ export default function VideosPage() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [imageError, setImageError] = useState<string>('');
+
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB em bytes
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
 
   const {
     register,
@@ -79,17 +87,11 @@ export default function VideosPage() {
       setTotalPages(videosRes?.pagination?.totalPages || 1);
       setCategories(categoriesRes?.categorias || []);
       
-      // Carregar usuários apenas se for admin
-      if (isAdmin) {
-        const usersRes = await usersAPI.getAll(1, 100);
-        setUsers(usersRes?.usuarios || []);
+      // Não precisamos mais carregar lista de usuários, pois o autor é sempre o usuário logado
+      if (currentUser) {
+        setUsers([currentUser]);
       } else {
-        // Para usuários não-admin, usar apenas o usuário atual
-        if (currentUser) {
-          setUsers([currentUser]);
-        } else {
-          setUsers([]);
-        }
+        setUsers([]);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -129,6 +131,18 @@ export default function VideosPage() {
 
   const onSubmit = async (data: VideoFormData) => {
     try {
+      // Garantir que o autor seja sempre o usuário logado
+      if (!currentUser?.idUsuario) {
+        alert('Erro: Usuário não identificado. Faça login novamente.');
+        return;
+      }
+
+      // Validar se há erro de imagem antes de enviar
+      if (imageError) {
+        alert('Por favor, corrija o erro na imagem antes de salvar.');
+        return;
+      }
+
       setUploading(true);
       
       
@@ -158,7 +172,7 @@ export default function VideosPage() {
       const videoData = {
         nomeVideo: data.nomeVideo,
         descricao: data.descricao,
-        idUsuario: Number(data.idUsuario), // Garantir que seja number
+        idUsuario: currentUser.idUsuario, // Sempre usar o usuário logado
         idCategoria: Number(data.idCategoria), // Garantir que seja number
         urlArquivo: videoUrl,
         imagemThumb: imageUrl,
@@ -190,13 +204,6 @@ export default function VideosPage() {
         throw new Error('Campos obrigatórios não preenchidos');
       }
       
-      // Validar se o usuário existe na lista carregada
-      const userExists = users.find(u => u.idUsuario === videoData.idUsuario);
-      if (!userExists) {
-        console.error(`Usuário com ID ${videoData.idUsuario} não encontrado. Usuários disponíveis:`, users.map(u => u.idUsuario));
-        throw new Error(`Usuário com ID ${videoData.idUsuario} não encontrado. Recarregue a página.`);
-      }
-      
       // Validar se a categoria existe na lista carregada
       const categoryExists = categories.find(c => c.idCategoria === videoData.idCategoria);
       if (!categoryExists) {
@@ -211,9 +218,6 @@ export default function VideosPage() {
       }
       if (!videoData.descricao || videoData.descricao.trim() === '') {
         throw new Error('Descrição não pode estar vazia');
-      }
-      if (!videoData.idUsuario || videoData.idUsuario <= 0) {
-        throw new Error('ID do usuário inválido');
       }
       if (!videoData.idCategoria || videoData.idCategoria <= 0) {
         throw new Error('ID da categoria inválido');
@@ -252,7 +256,6 @@ export default function VideosPage() {
       nomeVideo: video.nomeVideo,
       descricao: video.descricao,
       idCategoria: video.idCategoria,
-      idUsuario: video.idUsuario,
       urlArquivo: video.urlArquivo || '',
       imagemThumb: video.imagemThumb || '',
       nomeAutor: video.nomeAutor || '',
@@ -277,11 +280,7 @@ export default function VideosPage() {
 
   const openCreateModal = () => {
     setEditingVideo(null);
-    // Usar o usuário atual ou o primeiro usuário disponível
-    const defaultUserId = currentUser?.idUsuario || (users.length > 0 ? users[0].idUsuario : 1);
-    reset({
-      idUsuario: defaultUserId,
-    });
+    reset();
     setIsModalOpen(true);
   };
 
@@ -290,6 +289,7 @@ export default function VideosPage() {
     setEditingVideo(null);
     setVideoFile(null);
     setImageFile(null);
+    setImageError('');
     reset();
   };
 
@@ -507,20 +507,15 @@ export default function VideosPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Autor
               </label>
-              <select
-                {...register('idUsuario', { valueAsNumber: true })}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white text-gray-900"
-              >
-                <option value="">Selecione um autor</option>
-                {users.map((user) => (
-                  <option key={user.idUsuario} value={user.idUsuario}>
-                    {user.nomeUsuario}
-                  </option>
-                ))}
-              </select>
-              {errors.idUsuario && (
-                <p className="text-sm text-red-600 mt-1">{errors.idUsuario.message}</p>
-              )}
+              <input
+                type="text"
+                value={currentUser?.nomeUsuario || 'Usuário não identificado'}
+                disabled
+                className="block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed sm:text-sm px-3 py-2 border"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                O autor é automaticamente definido como o usuário logado
+              </p>
             </div>
           </div>
 
@@ -556,17 +551,41 @@ export default function VideosPage() {
               <input
                 type="file"
                 accept="image/jpeg,image/png"
-                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setImageError('');
+                  
+                  if (file) {
+                    // Validar tamanho do arquivo (máximo 5MB)
+                    if (file.size > MAX_IMAGE_SIZE) {
+                      setImageError(`Arquivo muito grande! Tamanho máximo permitido: 5MB. Tamanho do arquivo: ${formatFileSize(file.size)}`);
+                      setImageFile(null);
+                      return;
+                    }
+
+                    // Validar se é uma imagem
+                    if (!file.type.startsWith('image/')) {
+                      setImageError('Por favor, selecione apenas arquivos de imagem (JPG, PNG)');
+                      setImageFile(null);
+                      return;
+                    }
+                  }
+                  
+                  setImageFile(file);
+                }}
                 className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
               />
-              {imageFile && (
+              {imageFile && !imageError && (
                 <span className="text-sm text-green-600">
-                  ✓ {imageFile.name}
+                  ✓ {imageFile.name} ({formatFileSize(imageFile.size)})
                 </span>
               )}
             </div>
+            {imageError && (
+              <p className="text-sm text-red-600 mt-1">{imageError}</p>
+            )}
             <p className="text-xs text-gray-500 mt-1">
-              Imagem que será exibida como capa do vídeo
+              Imagem que será exibida como capa do vídeo. <strong>Limite: 5MB</strong>
             </p>
           </div>
 

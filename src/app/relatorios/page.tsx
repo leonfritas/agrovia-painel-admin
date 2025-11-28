@@ -28,7 +28,7 @@ interface ReportData {
 
 export default function RelatoriosPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [reportData, setReportData] = useState<ReportData>({
     totalUsers: 0,
@@ -49,20 +49,33 @@ export default function RelatoriosPage() {
     }
 
     loadReportData();
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, isAdmin]);
 
   const loadReportData = async () => {
     try {
       setLoading(true);
-      const [usersRes, categoriesRes, postsRes, videosRes] = await Promise.all([
-        usersAPI.getAll(1, 1000),
+      
+      // Carregar dados de usuários apenas se for admin
+      let usersData = { usuarios: [] };
+      if (isAdmin) {
+        try {
+          usersData = await usersAPI.getAll(1, 1000);
+        } catch (error: any) {
+          // Se der erro 403 ou outro, apenas ignora e continua sem dados de usuários
+          if (error.response?.status !== 403) {
+            console.error('Erro ao carregar usuários:', error);
+          }
+        }
+      }
+
+      const [categoriesRes, postsRes, videosRes] = await Promise.all([
         categoriesAPI.getAll(1, 1000),
         postsAPI.getAll(1, 1000),
         videosAPI.getAll(1, 1000),
       ]);
 
-      const adminUsers = usersRes.usuarios.filter(user => user.ativoAdm).length;
-      const regularUsers = usersRes.usuarios.filter(user => !user.ativoAdm).length;
+      const adminUsers = usersData.usuarios.filter(user => user.ativoAdm).length;
+      const regularUsers = usersData.usuarios.filter(user => !user.ativoAdm).length;
 
       // Agrupar posts por categoria
       const postsByCategory = categoriesRes.categorias.map(category => ({
@@ -77,7 +90,7 @@ export default function RelatoriosPage() {
       }));
 
       setReportData({
-        totalUsers: usersRes.usuarios.length,
+        totalUsers: usersData.usuarios.length,
         totalCategories: categoriesRes.categorias.length,
         totalPosts: postsRes.posts.length,
         totalVideos: videosRes.videos.length,
@@ -118,36 +131,38 @@ export default function RelatoriosPage() {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="p-5">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0">
-                      <UsersIcon className="h-6 w-6 text-gray-400" />
+            <div className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} mb-8`}>
+              {isAdmin && (
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="p-5">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <UsersIcon className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <div className="ml-5 w-0 flex-1">
+                        <dl>
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            Total de Usuários
+                          </dt>
+                          <dd className="text-lg font-medium text-gray-900">
+                            {reportData.totalUsers}
+                          </dd>
+                        </dl>
+                      </div>
                     </div>
-                    <div className="ml-5 w-0 flex-1">
-                      <dl>
-                        <dt className="text-sm font-medium text-gray-500 truncate">
-                          Total de Usuários
-                        </dt>
-                        <dd className="text-lg font-medium text-gray-900">
-                          {reportData.totalUsers}
-                        </dd>
-                      </dl>
+                  </div>
+                  <div className="bg-gray-50 px-5 py-3">
+                    <div className="text-sm">
+                      <span className="text-green-600 font-medium">
+                        {reportData.adminUsers} admins
+                      </span>
+                      <span className="text-gray-500 ml-2">
+                        {reportData.regularUsers} usuários
+                      </span>
                     </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 px-5 py-3">
-                  <div className="text-sm">
-                    <span className="text-green-600 font-medium">
-                      {reportData.adminUsers} admins
-                    </span>
-                    <span className="text-gray-500 ml-2">
-                      {reportData.regularUsers} usuários
-                    </span>
-                  </div>
-                </div>
-              </div>
+              )}
 
               <div className="bg-white overflow-hidden shadow rounded-lg">
                 <div className="p-5">
@@ -219,26 +234,34 @@ export default function RelatoriosPage() {
                     Posts por Categoria
                   </h3>
                   <div className="space-y-3">
-                    {reportData.postsByCategory.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          {item.category}
-                        </span>
-                        <div className="flex items-center">
-                          <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / Math.max(...reportData.postsByCategory.map(p => p.count))) * 100}%`
-                              }}
-                            ></div>
+                    {reportData.postsByCategory.length > 0 ? (
+                      reportData.postsByCategory.map((item, index) => {
+                        const maxCount = Math.max(...reportData.postsByCategory.map(p => p.count), 1);
+                        const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                        return (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600">
+                              {item.category}
+                            </span>
+                            <div className="flex items-center">
+                              <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                <div
+                                  className="bg-blue-600 h-2 rounded-full"
+                                  style={{
+                                    width: `${percentage}%`
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {item.count}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {item.count}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">Nenhum post encontrado</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -250,26 +273,34 @@ export default function RelatoriosPage() {
                     Vídeos por Categoria
                   </h3>
                   <div className="space-y-3">
-                    {reportData.videosByCategory.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
-                          {item.category}
-                        </span>
-                        <div className="flex items-center">
-                          <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
-                            <div
-                              className="bg-green-600 h-2 rounded-full"
-                              style={{
-                                width: `${(item.count / Math.max(...reportData.videosByCategory.map(v => v.count))) * 100}%`
-                              }}
-                            ></div>
+                    {reportData.videosByCategory.length > 0 ? (
+                      reportData.videosByCategory.map((item, index) => {
+                        const maxCount = Math.max(...reportData.videosByCategory.map(v => v.count), 1);
+                        const percentage = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
+                        return (
+                          <div key={index} className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-gray-600">
+                              {item.category}
+                            </span>
+                            <div className="flex items-center">
+                              <div className="w-32 bg-gray-200 rounded-full h-2 mr-3">
+                                <div
+                                  className="bg-green-600 h-2 rounded-full"
+                                  style={{
+                                    width: `${percentage}%`
+                                  }}
+                                ></div>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {item.count}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-sm font-medium text-gray-900">
-                            {item.count}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm text-gray-500">Nenhum vídeo encontrado</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -299,7 +330,9 @@ export default function RelatoriosPage() {
                     </div>
                     <h4 className="text-lg font-medium text-gray-900">Engajamento</h4>
                     <p className="text-3xl font-bold text-green-600 mt-2">
-                      {Math.round((reportData.totalPosts + reportData.totalVideos) / reportData.totalUsers * 100) / 100}
+                      {reportData.totalUsers > 0 
+                        ? (Math.round((reportData.totalPosts + reportData.totalVideos) / reportData.totalUsers * 100) / 100).toFixed(2)
+                        : '0.00'}
                     </p>
                     <p className="text-sm text-gray-500">Conteúdo por usuário</p>
                   </div>

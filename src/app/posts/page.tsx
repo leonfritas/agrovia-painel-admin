@@ -21,7 +21,6 @@ const postSchema = z.object({
   descricao: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   conteudo: z.string().optional(),
   idCategoria: z.number().min(1, 'Categoria é obrigatória'),
-  idUsuario: z.number().min(1, 'Usuário é obrigatório'),
   linkExterno: z.string().optional(),
   conteudoFooter: z.string().optional(),
 });
@@ -51,6 +50,19 @@ export default function PostsPage() {
     imagemConteudo?: string;
     imagemFooter?: File;
   }>({});
+  const [imageErrors, setImageErrors] = useState<{
+    imagemDestaque?: string;
+    imagemConteudo?: string;
+    imagemFooter?: string;
+  }>({});
+
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB em bytes
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  };
 
   const {
     register,
@@ -90,17 +102,11 @@ export default function PostsPage() {
       setTotalPages(postsRes?.pagination?.totalPages || 1);
       setCategories(categoriesRes?.categorias || []);
       
-      // Carregar usuários apenas se for admin
-      if (isAdmin) {
-        const usersRes = await usersAPI.getAll(1, 100);
-        setUsers(usersRes?.usuarios || []);
+      // Não precisamos mais carregar lista de usuários, pois o autor é sempre o usuário logado
+      if (currentUser) {
+        setUsers([currentUser]);
       } else {
-        // Para usuários não-admin, usar apenas o usuário atual
-        if (currentUser) {
-          setUsers([currentUser]);
-        } else {
-          setUsers([]);
-        }
+        setUsers([]);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -114,7 +120,32 @@ export default function PostsPage() {
   };
 
   const handleImageChange = (field: 'imagemDestaque' | 'imagemConteudo' | 'imagemFooter', file: File | null) => {
+    // Limpar erro anterior
+    setImageErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+
     if (file) {
+      // Validar tamanho do arquivo (máximo 5MB)
+      if (file.size > MAX_IMAGE_SIZE) {
+        setImageErrors(prev => ({
+          ...prev,
+          [field]: `Arquivo muito grande! Tamanho máximo permitido: 5MB. Tamanho do arquivo: ${formatFileSize(file.size)}`
+        }));
+        return;
+      }
+
+      // Validar se é uma imagem
+      if (!file.type.startsWith('image/')) {
+        setImageErrors(prev => ({
+          ...prev,
+          [field]: 'Por favor, selecione apenas arquivos de imagem (JPG, PNG, etc.)'
+        }));
+        return;
+      }
+
       setImageFiles(prev => ({ ...prev, [field]: file }));
       
       // Criar preview
@@ -139,6 +170,18 @@ export default function PostsPage() {
 
   const onSubmit = async (data: PostFormData) => {
     try {
+      // Garantir que o autor seja sempre o usuário logado
+      if (!currentUser?.idUsuario) {
+        alert('Erro: Usuário não identificado. Faça login novamente.');
+        return;
+      }
+
+      // Validar se há erros de imagem antes de enviar
+      if (Object.keys(imageErrors).length > 0) {
+        alert('Por favor, corrija os erros nas imagens antes de salvar.');
+        return;
+      }
+
       console.log('Dados do formulário:', data);
       console.log('Arquivos de imagem:', imageFiles);
       
@@ -148,7 +191,7 @@ export default function PostsPage() {
       formData.append('descricao', data.descricao);
       if (data.conteudo) formData.append('conteudo', data.conteudo);
       formData.append('idCategoria', data.idCategoria.toString());
-      formData.append('idUsuario', data.idUsuario.toString());
+      formData.append('idUsuario', currentUser.idUsuario.toString()); // Sempre usar o usuário logado
       if (data.linkExterno) formData.append('linkExterno', data.linkExterno);
       if (data.conteudoFooter) formData.append('conteudoFooter', data.conteudoFooter);
       
@@ -197,7 +240,6 @@ export default function PostsPage() {
       descricao: post.descricao,
       conteudo: post.conteudo,
       idCategoria: post.idCategoria,
-      idUsuario: post.idUsuario,
       linkExterno: post.linkExterno,
       conteudoFooter: post.conteudoFooter,
     });
@@ -224,6 +266,7 @@ export default function PostsPage() {
     setEditingPost(null);
     setImageFiles({});
     setImagePreviews({});
+    setImageErrors({});
     reset();
     setIsModalOpen(true);
   };
@@ -233,6 +276,7 @@ export default function PostsPage() {
     setEditingPost(null);
     setImageFiles({});
     setImagePreviews({});
+    setImageErrors({});
     reset();
   };
 
@@ -473,20 +517,15 @@ export default function PostsPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Autor
               </label>
-              <select
-                {...register('idUsuario', { valueAsNumber: true })}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm bg-white text-gray-900"
-              >
-                <option value="">Selecione um autor</option>
-                {users.map((user) => (
-                  <option key={user.idUsuario} value={user.idUsuario}>
-                    {user.nomeUsuario}
-                  </option>
-                ))}
-              </select>
-              {errors.idUsuario && (
-                <p className="text-sm text-red-600 mt-1">{errors.idUsuario.message}</p>
-              )}
+              <input
+                type="text"
+                value={currentUser?.nomeUsuario || 'Usuário não identificado'}
+                disabled
+                className="block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 text-gray-600 cursor-not-allowed sm:text-sm px-3 py-2 border"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                O autor é automaticamente definido como o usuário logado
+              </p>
             </div>
           </div>
 
@@ -498,7 +537,12 @@ export default function PostsPage() {
 
           {/* Upload de Imagens */}
           <div className="space-y-4 border-t pt-4">
-            <h3 className="text-sm font-semibold text-gray-900">Imagens (opcional)</h3>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">Imagens (opcional)</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                <strong>Limite de tamanho:</strong> Máximo de 5MB por imagem
+              </p>
+            </div>
             
             {/* Imagem de Destaque */}
             <div>
@@ -511,9 +555,17 @@ export default function PostsPage() {
                 onChange={(e) => handleImageChange('imagemDestaque', e.target.files?.[0] || null)}
                 className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none px-3 py-2"
               />
-              {imagePreviews.imagemDestaque && (
+              {imageErrors.imagemDestaque && (
+                <p className="text-sm text-red-600 mt-1">{imageErrors.imagemDestaque}</p>
+              )}
+              {imagePreviews.imagemDestaque && !imageErrors.imagemDestaque && (
                 <div className="mt-2">
                   <img src={imagePreviews.imagemDestaque} alt="Preview" className="h-32 w-auto rounded-lg border" />
+                  {imageFiles.imagemDestaque && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tamanho: {formatFileSize(imageFiles.imagemDestaque.size)}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -529,9 +581,17 @@ export default function PostsPage() {
                 onChange={(e) => handleImageChange('imagemConteudo', e.target.files?.[0] || null)}
                 className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none px-3 py-2"
               />
-              {imagePreviews.imagemConteudo && (
+              {imageErrors.imagemConteudo && (
+                <p className="text-sm text-red-600 mt-1">{imageErrors.imagemConteudo}</p>
+              )}
+              {imagePreviews.imagemConteudo && !imageErrors.imagemConteudo && (
                 <div className="mt-2">
                   <img src={imagePreviews.imagemConteudo} alt="Preview" className="h-32 w-auto rounded-lg border" />
+                  {imageFiles.imagemConteudo && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tamanho: {formatFileSize(imageFiles.imagemConteudo.size)}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -547,9 +607,17 @@ export default function PostsPage() {
                 onChange={(e) => handleImageChange('imagemFooter', e.target.files?.[0] || null)}
                 className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-white focus:outline-none px-3 py-2"
               />
-              {imagePreviews.imagemFooter && (
+              {imageErrors.imagemFooter && (
+                <p className="text-sm text-red-600 mt-1">{imageErrors.imagemFooter}</p>
+              )}
+              {imagePreviews.imagemFooter && !imageErrors.imagemFooter && (
                 <div className="mt-2">
                   <img src={imagePreviews.imagemFooter} alt="Preview" className="h-32 w-auto rounded-lg border" />
+                  {imageFiles.imagemFooter && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tamanho: {formatFileSize(imageFiles.imagemFooter.size)}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

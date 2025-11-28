@@ -14,16 +14,18 @@ import {
   ChartBarIcon,
   CogIcon,
   ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/outline';
 
 const getNavigation = (isAdmin: boolean) => [
   { name: 'Dashboard', href: '/', icon: HomeIcon, show: true },
-  { name: 'Usuários', href: '/usuarios', icon: UsersIcon, show: true },
-  { name: 'Categorias', href: '/categorias', icon: TagIcon, show: isAdmin },
-  { name: 'Posts', href: '/posts', icon: DocumentTextIcon, show: isAdmin },
-  { name: 'Vídeos', href: '/videos', icon: VideoCameraIcon, show: isAdmin },
-  { name: 'Comentários', href: '/comentarios', icon: ChatBubbleLeftRightIcon, show: isAdmin },
-  { name: 'Relatórios', href: '/relatorios', icon: ChartBarIcon, show: isAdmin },
+  { name: 'Usuários', href: '/usuarios', icon: UsersIcon, show: isAdmin },
+  { name: 'Categorias', href: '/categorias', icon: TagIcon, show: true },
+  { name: 'Posts', href: '/posts', icon: DocumentTextIcon, show: true },
+  { name: 'Vídeos', href: '/videos', icon: VideoCameraIcon, show: true },
+  { name: 'Comentários', href: '/comentarios', icon: ChatBubbleLeftRightIcon, show: true },
+  { name: 'Relatórios', href: '/relatorios', icon: ChartBarIcon, show: true },
+  { name: 'Emails', href: '/emails', icon: EnvelopeIcon, show: true },
   { name: 'Configurações', href: '/configuracoes', icon: CogIcon, show: true },
 ];
 

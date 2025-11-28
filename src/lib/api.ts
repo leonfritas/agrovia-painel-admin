@@ -306,4 +306,35 @@ export const commentsAPI = {
   },
 };
 
+// Tipos para emails
+export interface Email {
+  idEmail: number;
+  email: string;
+  data: string;
+}
+
+// API de emails
+export const emailsAPI = {
+  getAll: async (page = 1, limit = 20): Promise<{ emails: Email[]; pagination: { currentPage: number; totalPages: number; totalEmails: number; hasNext: boolean; hasPrev: boolean } }> => {
+    const params = new URLSearchParams({ page: page.toString(), limit: limit.toString() });
+    const response = await api.get(`/email?${params}`);
+    return response.data;
+  },
+
+  getById: async (id: number): Promise<{ email: Email }> => {
+    const response = await api.get(`/email/${id}`);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/email/${id}`);
+    return response.data;
+  },
+
+  getStats: async (): Promise<{ overview: { total: number; today: number; lastWeek: number } }> => {
+    const response = await api.get('/email/stats');
+    return response.data;
+  },
+};
+
 export default api;

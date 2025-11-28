@@ -15,9 +15,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PencilIcon, TrashIcon, PlusIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 
+// Schema unificado (senha opcional, mas se fornecida deve ter no mínimo 6 caracteres)
 const userSchema = z.object({
   nomeUsuario: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  senhaUsuario: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  senhaUsuario: z.string().optional(),
   ativoAdm: z.boolean().optional(),
 });
 
@@ -47,21 +48,10 @@ export default function UsuariosPage() {
     try {
       setLoading(true);
       
-      if (isAdmin) {
-        // Administradores podem ver todos os usuários
-        const response = await usersAPI.getAll(currentPage, 10);
-        setUsers(response?.usuarios || []);
-        setTotalPages(response?.pagination?.totalPages || 1);
-      } else {
-        // Usuários comuns veem apenas a si mesmos
-        if (currentUser) {
-          setUsers([currentUser]);
-          setTotalPages(1);
-        } else {
-          setUsers([]);
-          setTotalPages(1);
-        }
-      }
+      // Apenas administradores podem acessar esta página
+      const response = await usersAPI.getAll(currentPage, 10);
+      setUsers(response?.usuarios || []);
+      setTotalPages(response?.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Erro ao carregar usuários:', error);
       setUsers([]);
@@ -69,7 +59,7 @@ export default function UsuariosPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, isAdmin, currentUser]);
+  }, [currentPage]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -77,14 +67,44 @@ export default function UsuariosPage() {
       return;
     }
 
+    // Apenas administradores podem acessar esta página
+    if (!isAdmin) {
+      router.push('/');
+      return;
+    }
+
     loadUsers();
-  }, [isAuthenticated, router, currentPage, loadUsers]);
+  }, [isAuthenticated, isAdmin, router, currentPage, loadUsers]);
 
   const onSubmit = async (data: UserFormData) => {
     try {
       if (editingUser) {
-        await usersAPI.update(editingUser.idUsuario, data);
+        // Ao editar, só enviar senha se foi preenchida
+        const updateData: any = {
+          nomeUsuario: data.nomeUsuario,
+          ativoAdm: data.ativoAdm,
+        };
+        
+        // Só incluir senha se foi preenchida e tiver no mínimo 6 caracteres
+        if (data.senhaUsuario && data.senhaUsuario.trim() !== '') {
+          if (data.senhaUsuario.length < 6) {
+            alert('A senha deve ter pelo menos 6 caracteres.');
+            return;
+          }
+          updateData.senhaUsuario = data.senhaUsuario;
+        }
+        
+        await usersAPI.update(editingUser.idUsuario, updateData);
       } else {
+        // Ao criar, senha é obrigatória
+        if (!data.senhaUsuario || data.senhaUsuario.trim() === '') {
+          alert('A senha é obrigatória ao criar um novo usuário.');
+          return;
+        }
+        if (data.senhaUsuario.length < 6) {
+          alert('A senha deve ter pelo menos 6 caracteres.');
+          return;
+        }
         await usersAPI.create(data);
       }
       
@@ -94,6 +114,7 @@ export default function UsuariosPage() {
       loadUsers();
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
+      alert('Erro ao salvar usuário. Tente novamente.');
     }
   };
 
@@ -101,6 +122,7 @@ export default function UsuariosPage() {
     setEditingUser(user);
     reset({
       nomeUsuario: user.nomeUsuario,
+      senhaUsuario: '', // Deixar vazio ao editar (opcional)
       ativoAdm: user.ativoAdm,
     });
     setIsModalOpen(true);
@@ -159,10 +181,7 @@ export default function UsuariosPage() {
               <div>
                 <h1 className="text-2xl font-semibold text-gray-900">Usuários</h1>
                 <p className="mt-1 text-sm text-gray-600">
-                  {isAdmin 
-                    ? 'Gerencie os usuários do sistema' 
-                    : 'Visualize e edite seu perfil'
-                  }
+                  Gerencie os usuários do sistema e permissões de administrador
                 </p>
               </div>
               {isAdmin && (
@@ -285,25 +304,26 @@ export default function UsuariosPage() {
           />
 
           <Input
-            label="Senha"
+            label={editingUser ? "Nova Senha (deixe em branco para manter a atual)" : "Senha"}
             type="password"
             {...register('senhaUsuario')}
             error={errors.senhaUsuario?.message}
-            placeholder="Digite a senha"
+            placeholder={editingUser ? "Deixe em branco para manter a senha atual" : "Digite a senha"}
           />
 
-          {isAdmin && (
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('ativoAdm')}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label className="ml-2 block text-sm text-gray-900">
-                Administrador
-              </label>
-            </div>
-          )}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              {...register('ativoAdm')}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label className="ml-2 block text-sm text-gray-900">
+              Administrador
+            </label>
+            <p className="ml-2 text-xs text-gray-500">
+              (Marque para tornar este usuário administrador)
+            </p>
+          </div>
 
           <div className="flex justify-end space-x-3 pt-4">
             <Button type="button" variant="secondary" onClick={closeModal}>

@@ -23,13 +23,13 @@ export default function ComentariosPage() {
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
 
   useEffect(() => {
-    if (!isAuthenticated || !isAdmin) {
+    if (!isAuthenticated) {
       router.push('/login');
       return;
     }
 
     loadComentarios();
-  }, [isAuthenticated, isAdmin, router]);
+  }, [isAuthenticated, router]);
 
   const loadComentarios = async () => {
     try {

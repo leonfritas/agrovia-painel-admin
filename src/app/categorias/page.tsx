@@ -172,12 +172,12 @@ export default function CategoriasPage() {
                   Gerencie as categorias do sistema
                 </p>
               </div>
-              {canManageContent() && (
+              {/* {canManageContent() && (
                 <Button onClick={openCreateModal}>
                   <PlusIcon className="h-5 w-5 mr-2" />
                   Nova Categoria
                 </Button>
-              )}
+              )} */}
             </div>
 
             <div className="bg-white shadow overflow-hidden sm:rounded-md">

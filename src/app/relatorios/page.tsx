@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { usersAPI, categoriesAPI, postsAPI, videosAPI } from '@/lib/api';
+import { usersAPI, categoriesAPI, postsAPI, videosAPI, User } from '@/lib/api';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { 
@@ -56,7 +56,7 @@ export default function RelatoriosPage() {
       setLoading(true);
       
       // Carregar dados de usuários apenas se for admin
-      let usersData = { usuarios: [] };
+      let usersData: { usuarios: User[]; pagination?: any } = { usuarios: [] };
       if (isAdmin) {
         try {
           usersData = await usersAPI.getAll(1, 1000);
